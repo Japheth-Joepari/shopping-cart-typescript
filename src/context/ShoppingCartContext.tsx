@@ -1,34 +1,49 @@
 import  { createContext, ReactNode, useContext, useState } from "react";
+import {ShoppingCart} from "../components/ShoppingCart"
 
+
+// children props
 type ShoppingCartProviderProps = {
     children: ReactNode
 }
 
+// Each Item prop
 type CartItem = {
     id: number,
     quantity: number
 }
 
-type ShoppingCartContext = {
+// shopping cart context prop
+type ShoppingCartContextProp = {
+    openCart: () => void
+    closeCart: () => void
     getItemQuantity: (id: number) => number
     increaseCartQuantity: (id: number) => void
     decreaseCartQuantity: (id: number) => void
     removeFromCrt: (id: number) => void
+    cartQuantity: number
+    cartItems: CartItem[]
 }
 
-const ShoppingCartContext = createContext({} as ShoppingCartContext)
+// using the the shoppingCartContextProp as prop to shopping cart
+const ShoppingCartContext = createContext({} as ShoppingCartContextProp)
 
+// exporting shopping cart context
 export const useShoppingCart = () => {
     return useContext(ShoppingCartContext)
 }
 
+// Parent wrapper component
 export const ShoppingCartProvider = ({ children }: ShoppingCartProviderProps) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([])
+    const [isOpen, setIsOpen] = useState(false)
 
+    // function checks if item exists and print out the quantity
     function getItemQuantity(id: number) {
         return cartItems.find(item => item.id === id)?.quantity || 0
     }
 
+    // function adds to cart and increases the quantity
     function increaseCartQuantity(id: number) {
         setCartItems(currItems => {
             if (currItems.find(item => item.id === id) == null) {
@@ -45,12 +60,14 @@ export const ShoppingCartProvider = ({ children }: ShoppingCartProviderProps) =>
         })
     }
 
+    // function removes item from cart
     function removeFromCrt (id: number) {
         setCartItems(currItems => {
             return currItems.filter(item => item.id !== id)
         })
     }
 
+    // function decreases the cart quantity
     function decreaseCartQuantity(id: number) {
         setCartItems(currItems => {
             if (currItems.find(item => item.id === id)?.quantity === 1) {
@@ -67,6 +84,13 @@ export const ShoppingCartProvider = ({ children }: ShoppingCartProviderProps) =>
         })
     }
 
+    // getting the quantity of item in cart
+    const cartQuantity = cartItems.reduce((quantity, item ) => item.quantity + quantity,0)
+
+    // open cart functionality
+    const openCart = () => setIsOpen(true)
+    const closeCart = () => setIsOpen(false)
+
     return (
         <ShoppingCartContext.Provider
       value={{
@@ -74,9 +98,15 @@ export const ShoppingCartProvider = ({ children }: ShoppingCartProviderProps) =>
         increaseCartQuantity,
         decreaseCartQuantity,
         removeFromCrt,
+        cartQuantity,
+        cartItems,
+        openCart,
+        closeCart,
+        
       }}
     >
       {children}
+      <ShoppingCart isOpen={isOpen}/>
     </ShoppingCartContext.Provider>
     )
 }
